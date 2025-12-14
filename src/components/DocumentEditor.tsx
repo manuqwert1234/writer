@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -12,6 +12,62 @@ interface DocumentEditorProps {
     documentId: string;
 }
 
+// HTML to Markdown converter
+function htmlToMarkdown(html: string): string {
+    let md = html;
+    
+    // Headings
+    md = md.replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n');
+    md = md.replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n');
+    md = md.replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n');
+    
+    // Bold and Italic
+    md = md.replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**');
+    md = md.replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**');
+    md = md.replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*');
+    md = md.replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*');
+    md = md.replace(/<s[^>]*>(.*?)<\/s>/gi, '~~$1~~');
+    
+    // Lists
+    md = md.replace(/<ul[^>]*>/gi, '\n');
+    md = md.replace(/<\/ul>/gi, '\n');
+    md = md.replace(/<ol[^>]*>/gi, '\n');
+    md = md.replace(/<\/ol>/gi, '\n');
+    md = md.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n');
+    
+    // Blockquote
+    md = md.replace(/<blockquote[^>]*>(.*?)<\/blockquote>/gis, (_, content) => {
+        return content.split('\n').map((line: string) => `> ${line}`).join('\n') + '\n\n';
+    });
+    
+    // Code blocks
+    md = md.replace(/<pre[^>]*><code[^>]*>(.*?)<\/code><\/pre>/gis, '```\n$1\n```\n\n');
+    md = md.replace(/<code[^>]*>(.*?)<\/code>/gi, '`$1`');
+    
+    // Paragraphs and line breaks
+    md = md.replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n');
+    md = md.replace(/<br\s*\/?>/gi, '\n');
+    
+    // Remove remaining HTML tags
+    md = md.replace(/<[^>]+>/g, '');
+    
+    // Decode HTML entities
+    md = md.replace(/&nbsp;/g, ' ');
+    md = md.replace(/&amp;/g, '&');
+    md = md.replace(/&lt;/g, '<');
+    md = md.replace(/&gt;/g, '>');
+    md = md.replace(/&quot;/g, '"');
+    md = md.replace(/&#39;/g, "'");
+    md = md.replace(/&ldquo;/g, '"');
+    md = md.replace(/&rdquo;/g, '"');
+    
+    // Clean up extra whitespace
+    md = md.replace(/\n{3,}/g, '\n\n');
+    md = md.trim();
+    
+    return md;
+}
+
 export function DocumentEditor({ documentId }: DocumentEditorProps) {
     const { document, loading, saveDocument, error, saveStatus } = useOptimizedDocument(documentId);
     const { setTyping, focusMode, isTyping } = useAppStore();
@@ -19,6 +75,74 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const hasInitializedRef = useRef(false);
     const [cursorPosition, setCursorPosition] = useState<{ top: number; left: number } | null>(null);
+    const [showExportMenu, setShowExportMenu] = useState(false);
+    const [exporting, setExporting] = useState(false);
+
+    // Export to PDF
+    const exportToPDF = useCallback(async () => {
+        if (!editor || !document) return;
+        
+        setExporting(true);
+        setShowExportMenu(false);
+        
+        try {
+            const html2pdf = (await import('html2pdf.js')).default;
+            
+            // Create a styled container for PDF
+            const content = document.createElement('div');
+            content.innerHTML = `
+                <div style="font-family: Georgia, serif; padding: 40px; max-width: 800px; margin: 0 auto;">
+                    <h1 style="font-size: 28px; margin-bottom: 20px; color: #1a1a1a;">${document.title || 'Untitled'}</h1>
+                    <div style="font-size: 16px; line-height: 1.8; color: #333;">
+                        ${editor.getHTML()}
+                    </div>
+                    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666;">
+                        Exported from Writer • ${new Date().toLocaleDateString()}
+                    </div>
+                </div>
+            `;
+            
+            const opt = {
+                margin: [10, 10, 10, 10],
+                filename: `${document.title || 'document'}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, logging: false },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            };
+            
+            await html2pdf().set(opt).from(content).save();
+        } catch (err) {
+            console.error('PDF export failed:', err);
+            alert('Failed to export PDF. Please try again.');
+        } finally {
+            setExporting(false);
+        }
+    }, [editor, document]);
+
+    // Export to Markdown
+    const exportToMarkdown = useCallback(() => {
+        if (!editor || !document) return;
+        
+        setShowExportMenu(false);
+        
+        const html = editor.getHTML();
+        const markdown = htmlToMarkdown(html);
+        
+        // Add title
+        const fullMarkdown = `# ${document.title || 'Untitled'}\n\n${markdown}\n\n---\n*Exported from Writer • ${new Date().toLocaleDateString()}*`;
+        
+        // Create download
+        const blob = new Blob([fullMarkdown], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = window.document.createElement('a');
+        a.href = url;
+        a.download = `${document.title || 'document'}.md`;
+        window.document.body.appendChild(a);
+        a.click();
+        window.document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, [editor, document]);
 
     const editor = useEditor({
         immediatelyRender: false,
@@ -246,6 +370,69 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
                     >
                         {'</>'}
                     </button>
+
+                    <div className="w-px h-5 bg-foreground/10 mx-2" />
+
+                    {/* Export Menu */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowExportMenu(!showExportMenu)}
+                            className={`p-2 rounded transition-colors flex items-center gap-1 ${showExportMenu ? 'bg-foreground/20 text-foreground' : 'text-foreground/50 hover:text-foreground hover:bg-foreground/10'}`}
+                            title="Export"
+                            disabled={exporting}
+                        >
+                            {exporting ? (
+                                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                </svg>
+                            ) : (
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                            )}
+                            <span className="text-sm">Export</span>
+                            <svg className={`w-3 h-3 transition-transform ${showExportMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        {/* Export dropdown */}
+                        {showExportMenu && (
+                            <div
+                                className="absolute top-full left-0 mt-2 w-44 rounded-xl overflow-hidden shadow-xl z-50"
+                                style={{
+                                    background: 'rgba(0,0,0,0.9)',
+                                    backdropFilter: 'blur(20px)',
+                                }}
+                            >
+                                <button
+                                    onClick={exportToPDF}
+                                    className="w-full px-4 py-3 text-left text-sm flex items-center gap-3 hover:bg-white/10 transition-colors text-white/80 hover:text-white"
+                                >
+                                    <svg className="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4zm-2.5 9.5a1 1 0 011-1h1a1 1 0 110 2h-1a1 1 0 01-1-1zm-3.5 0a1 1 0 011-1h1a1 1 0 110 2H8a1 1 0 01-1-1z"/>
+                                    </svg>
+                                    <div>
+                                        <div className="font-medium">PDF</div>
+                                        <div className="text-xs text-white/50">Print-ready document</div>
+                                    </div>
+                                </button>
+                                <button
+                                    onClick={exportToMarkdown}
+                                    className="w-full px-4 py-3 text-left text-sm flex items-center gap-3 hover:bg-white/10 transition-colors text-white/80 hover:text-white"
+                                >
+                                    <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M20.56 18H3.44C2.65 18 2 17.37 2 16.59V7.41C2 6.63 2.65 6 3.44 6h17.12c.79 0 1.44.63 1.44 1.41v9.18c0 .78-.65 1.41-1.44 1.41zM6.81 15.19v-3.66l1.92 2.35 1.92-2.35v3.66h1.93V8.81h-1.93l-1.92 2.35-1.92-2.35H4.88v6.38h1.93zM19.69 12h-1.92V8.81h-1.92V12h-1.93l2.89 3.28L19.69 12z"/>
+                                    </svg>
+                                    <div>
+                                        <div className="font-medium">Markdown</div>
+                                        <div className="text-xs text-white/50">For GitHub, Notion, etc.</div>
+                                    </div>
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
 
