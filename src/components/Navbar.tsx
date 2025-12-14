@@ -12,8 +12,8 @@ export function Navbar() {
             className={`fixed top-0 left-0 right-0 z-40 transition-opacity duration-500 ${shouldFade ? 'opacity-10 hover:opacity-100' : 'opacity-100'
                 }`}
         >
-            <div className="max-w-7xl mx-auto px-6 pt-6 sm:pt-4 pb-4 flex items-center justify-between">
-                <div className="flex items-center gap-4 ml-12 sm:ml-0">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-4 pb-4 flex items-center justify-center sm:justify-between">
+                <div className="flex items-center gap-4">
                     <h1
                         className="text-xl font-mono font-semibold text-white"
                         style={{ mixBlendMode: 'difference' }}
@@ -23,7 +23,7 @@ export function Navbar() {
                 </div>
 
                 <div
-                    className="flex items-center gap-2"
+                    className="hidden sm:flex items-center gap-2"
                     style={{ mixBlendMode: 'difference' }}
                 >
                     <button
