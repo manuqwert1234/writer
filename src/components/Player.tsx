@@ -7,25 +7,35 @@ import { VibeBackground } from './VibeBackground';
 export function Player() {
     const { tracks, currentTrack, setCurrentTrack, isLoading, error, genre, changeGenre } = useJamendo();
     const [isPlaying, setIsPlaying] = useState(false);
+    const [isBuffering, setIsBuffering] = useState(false);
     const [showPlaylist, setShowPlaylist] = useState(false);
     const [showGenres, setShowGenres] = useState(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const shouldPlayRef = useRef(false);
 
     const currentGenreInfo = MUSIC_GENRES.find(g => g.id === genre);
 
+    // Handle track change - play immediately if was playing
     useEffect(() => {
         if (audioRef.current && currentTrack) {
+            setIsBuffering(true);
             audioRef.current.src = currentTrack.audioSrc;
-            audioRef.current.load();
-
-            if (isPlaying) {
-                const playPromise = audioRef.current.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(error => {
-                        console.error("Playback failed:", error);
+            
+            // If we should be playing, start immediately
+            if (shouldPlayRef.current || isPlaying) {
+                shouldPlayRef.current = false;
+                audioRef.current.play()
+                    .then(() => {
+                        setIsPlaying(true);
+                        setIsBuffering(false);
+                    })
+                    .catch(err => {
+                        console.error("Playback failed:", err);
                         setIsPlaying(false);
+                        setIsBuffering(false);
                     });
-                }
+            } else {
+                setIsBuffering(false);
             }
         }
     }, [currentTrack]);
@@ -51,6 +61,7 @@ export function Player() {
 
     const playNext = useCallback(() => {
         if (!currentTrack || tracks.length === 0) return;
+        shouldPlayRef.current = true; // Auto-play next track
         const currentIndex = tracks.findIndex(t => t.id === currentTrack.id);
         const nextIndex = (currentIndex + 1) % tracks.length;
         setCurrentTrack(tracks[nextIndex]);
@@ -58,6 +69,7 @@ export function Player() {
 
     const playPrev = useCallback(() => {
         if (!currentTrack || tracks.length === 0) return;
+        shouldPlayRef.current = true; // Auto-play prev track
         const currentIndex = tracks.findIndex(t => t.id === currentTrack.id);
         const prevIndex = (currentIndex - 1 + tracks.length) % tracks.length;
         setCurrentTrack(tracks[prevIndex]);
@@ -80,12 +92,15 @@ export function Player() {
             {/* CSS Gradient Background - reacts to album colors */}
             <VibeBackground currentTrackImage={currentTrack?.coverArt} />
 
-            {/* Audio element */}
+            {/* Audio element with preload */}
             <audio
                 ref={audioRef}
+                preload="auto"
                 onEnded={playNext}
-                onPlay={() => setIsPlaying(true)}
+                onPlay={() => { setIsPlaying(true); setIsBuffering(false); }}
                 onPause={() => setIsPlaying(false)}
+                onWaiting={() => setIsBuffering(true)}
+                onCanPlay={() => setIsBuffering(false)}
             />
 
             {/* Genre selector - top right */}
@@ -160,11 +175,16 @@ export function Player() {
                         {/* Play/Pause */}
                         <button
                             onClick={togglePlay}
-                            disabled={!currentTrack}
+                            disabled={!currentTrack || isBuffering}
                             className="p-3 rounded-full bg-white/20 text-white hover:bg-white/30 hover:scale-105 transition-all disabled:opacity-50"
                             aria-label={isPlaying ? 'Pause' : 'Play'}
                         >
-                            {isPlaying ? (
+                            {isBuffering ? (
+                                <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                </svg>
+                            ) : isPlaying ? (
                                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
                                 </svg>
