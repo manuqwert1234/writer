@@ -5,6 +5,8 @@ import {
     User,
     onAuthStateChanged,
     signInWithRedirect,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
     getRedirectResult,
     GoogleAuthProvider,
     signOut as firebaseSignOut
@@ -14,7 +16,9 @@ import { auth } from '@/lib/firebase';
 interface AuthContextType {
     user: User | null;
     loading: boolean;
-    signIn: () => Promise<void>;
+    signInWithGoogle: () => Promise<void>;
+    signInWithEmail: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+    signUpWithEmail: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
     signOut: () => Promise<void>;
 }
 
@@ -46,11 +50,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => unsubscribe();
     }, []);
 
-    const signIn = async () => {
+    const signInWithGoogle = async () => {
         try {
             await signInWithRedirect(auth, googleProvider);
         } catch (error) {
-            console.error('Sign in error:', error);
+            console.error('Google sign in error:', error);
+        }
+    };
+
+    const signInWithEmail = async (email: string, password: string) => {
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            return { success: true };
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Sign in failed';
+            console.error('Email sign in error:', error);
+            return { success: false, error: errorMessage };
+        }
+    };
+
+    const signUpWithEmail = async (email: string, password: string) => {
+        try {
+            await createUserWithEmailAndPassword(auth, email, password);
+            return { success: true };
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Sign up failed';
+            console.error('Email sign up error:', error);
+            return { success: false, error: errorMessage };
         }
     };
 
@@ -63,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, signIn, signOut }}>
+        <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut }}>
             {children}
         </AuthContext.Provider>
     );
@@ -76,4 +102,5 @@ export function useAuth() {
     }
     return context;
 }
+
 
