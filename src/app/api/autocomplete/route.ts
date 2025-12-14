@@ -4,12 +4,17 @@ import { NextResponse } from "next/server";
 // 1. Enable Edge Runtime (Bypasses Node.js cold starts)
 export const runtime = 'edge';
 
-const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY,
-});
-
 export async function POST(req: Request) {
     try {
+        const apiKey = process.env.GROQ_API_KEY;
+        
+        // Return empty if no API key configured
+        if (!apiKey) {
+            return NextResponse.json({ suggestion: '' });
+        }
+
+        const groq = new Groq({ apiKey });
+        
         const { context } = await req.json();
 
         if (!context || context.length < 10) {
