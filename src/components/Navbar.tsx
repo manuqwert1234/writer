@@ -12,14 +12,14 @@ export function Navbar() {
             className={`fixed top-0 left-0 right-0 z-40 transition-opacity duration-500 ${shouldFade ? 'opacity-10 hover:opacity-100' : 'opacity-100'
                 }`}
         >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-4 pb-4 flex items-center">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-4 pb-4 flex items-center h-16 sm:h-14">
                 {/* Left spacer for hamburger on mobile */}
                 <div className="w-12 sm:w-0 shrink-0"></div>
                 
                 {/* Writer title - centered on small, left on large */}
-                <div className="flex-1 flex justify-center min-[1200px]:justify-start">
+                <div className="flex-1 flex items-center justify-center min-[1200px]:justify-start">
                     <h1
-                        className="text-xl font-mono font-semibold text-white"
+                        className="text-xl font-mono font-semibold text-white leading-none"
                         style={{ mixBlendMode: 'difference' }}
                     >
                         Writer
