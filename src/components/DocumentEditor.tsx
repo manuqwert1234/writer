@@ -36,12 +36,12 @@ function htmlToMarkdown(html: string): string {
     md = md.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n');
     
     // Blockquote
-    md = md.replace(/<blockquote[^>]*>(.*?)<\/blockquote>/gis, (_, content) => {
+    md = md.replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, (_, content) => {
         return content.split('\n').map((line: string) => `> ${line}`).join('\n') + '\n\n';
     });
     
     // Code blocks
-    md = md.replace(/<pre[^>]*><code[^>]*>(.*?)<\/code><\/pre>/gis, '```\n$1\n```\n\n');
+    md = md.replace(/<pre[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>/gi, '```\n$1\n```\n\n');
     md = md.replace(/<code[^>]*>(.*?)<\/code>/gi, '`$1`');
     
     // Paragraphs and line breaks
