@@ -85,14 +85,16 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
         setExporting(true);
         setShowExportMenu(false);
         
+        const docTitle = document.title || 'Untitled';
+        
         try {
             const html2pdf = (await import('html2pdf.js')).default;
             
             // Create a styled container for PDF
-            const content = document.createElement('div');
+            const content = window.document.createElement('div');
             content.innerHTML = `
                 <div style="font-family: Georgia, serif; padding: 40px; max-width: 800px; margin: 0 auto;">
-                    <h1 style="font-size: 28px; margin-bottom: 20px; color: #1a1a1a;">${document.title || 'Untitled'}</h1>
+                    <h1 style="font-size: 28px; margin-bottom: 20px; color: #1a1a1a;">${docTitle}</h1>
                     <div style="font-size: 16px; line-height: 1.8; color: #333;">
                         ${editor.getHTML()}
                     </div>
@@ -104,7 +106,7 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
             
             const opt = {
                 margin: [10, 10, 10, 10],
-                filename: `${document.title || 'document'}.pdf`,
+                filename: `${docTitle}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true, logging: false },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
@@ -126,18 +128,19 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
         
         setShowExportMenu(false);
         
+        const docTitle = document.title || 'Untitled';
         const html = editor.getHTML();
         const markdown = htmlToMarkdown(html);
         
         // Add title
-        const fullMarkdown = `# ${document.title || 'Untitled'}\n\n${markdown}\n\n---\n*Exported from Writer • ${new Date().toLocaleDateString()}*`;
+        const fullMarkdown = `# ${docTitle}\n\n${markdown}\n\n---\n*Exported from Writer • ${new Date().toLocaleDateString()}*`;
         
         // Create download
         const blob = new Blob([fullMarkdown], { type: 'text/markdown' });
         const url = URL.createObjectURL(blob);
         const a = window.document.createElement('a');
         a.href = url;
-        a.download = `${document.title || 'document'}.md`;
+        a.download = `${docTitle}.md`;
         window.document.body.appendChild(a);
         a.click();
         window.document.body.removeChild(a);
