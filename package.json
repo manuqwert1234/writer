@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@distube/ytdl-core": "^4.16.12",
     "@ducanh2912/next-pwa": "^10.2.9",
     "@tiptap/extension-placeholder": "^3.13.0",
     "@tiptap/pm": "^3.13.0",
@@ -21,6 +22,7 @@
     "next": "16.0.10",
     "react": "19.2.1",
     "react-dom": "19.2.1",
+    "ytmusic-api": "^5.3.0",
     "zustand": "^5.0.9"
   },
   "devDependencies": {
