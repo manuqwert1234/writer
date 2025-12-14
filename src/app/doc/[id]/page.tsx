@@ -4,7 +4,8 @@ import { use } from 'react';
 import { ContentArea } from "@/components/ContentArea";
 import { Sidebar } from "@/components/Sidebar";
 import { DocumentEditor } from "@/components/DocumentEditor";
-import { useAuth } from "@/components/AuthProvider";
+import { useOptimizedAuth } from "@/components/OptimizedAuthProvider";
+import { DocumentLoading } from "@/components/LoadingStates";
 
 interface PageProps {
     params: Promise<{ id: string }>;
@@ -12,14 +13,12 @@ interface PageProps {
 
 export default function DocumentPage({ params }: PageProps) {
     const { id } = use(params);
-    const { user, loading } = useAuth();
+    const { user, loading } = useOptimizedAuth();
 
     if (loading) {
         return (
             <ContentArea>
-                <div className="flex items-center justify-center min-h-[60vh]">
-                    <div className="text-foreground/50">Loading...</div>
-                </div>
+                <DocumentLoading />
             </ContentArea>
         );
     }

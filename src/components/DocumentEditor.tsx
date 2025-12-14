@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
-import { useDocument } from '@/hooks/useDocument';
+import { useOptimizedDocument } from '@/hooks/useOptimizedDocument';
 import { useAppStore } from '@/store/theme-store';
 import { useAutocomplete } from '@/hooks/useAutocomplete';
 
@@ -13,7 +13,7 @@ interface DocumentEditorProps {
 }
 
 export function DocumentEditor({ documentId }: DocumentEditorProps) {
-    const { document, loading, saveDocument } = useDocument(documentId);
+    const { document, loading, saveDocument, error } = useOptimizedDocument(documentId);
     const { setTyping, focusMode, isTyping } = useAppStore();
     const { ghostText, handleTyping, acceptGhostText, dismissGhostText, isLoading, cacheHit } = useAutocomplete();
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -110,6 +110,21 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
                 <div className="text-foreground/50">Loading document...</div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+                <div className="text-red-500 mb-4">Error loading document</div>
+                <p className="text-foreground/70 mb-4">{error.message}</p>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="px-4 py-2 bg-foreground text-background rounded-lg hover:opacity-90 transition-opacity"
+                >
+                    Retry
+                </button>
             </div>
         );
     }

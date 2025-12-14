@@ -1,23 +1,30 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from './AuthProvider';
-import { useDocuments } from '@/hooks/useDocuments';
-import { createDocument } from '@/hooks/useDocument';
+import { useState, useEffect } from 'react';
+import { useOptimizedAuth } from './OptimizedAuthProvider';
+import { useOptimizedDocuments } from '@/hooks/useOptimizedDocuments';
+import { createOptimizedDocument } from '@/hooks/useOptimizedDocument';
 import { useAppStore } from '@/store/theme-store';
+import { useRouter } from 'next/navigation';
 
 interface SidebarProps {
     currentDocId?: string;
 }
 
 export function Sidebar({ currentDocId }: SidebarProps) {
-    const { user, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, loading: authLoading } = useAuth();
-    const { documents, loading: docsLoading } = useDocuments();
+    const { user, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, loading: authLoading } = useOptimizedAuth();
+    const { documents, loading: docsLoading, error: docsError, setupDocumentsListener } = useOptimizedDocuments();
     const { focusMode, isTyping } = useAppStore();
     const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
     const [creating, setCreating] = useState(false);
+
+    // Setup documents listener when user changes
+    useEffect(() => {
+        if (user) {
+            setupDocumentsListener(user.uid);
+        }
+    }, [user, setupDocumentsListener]);
 
     // Email auth state
     const [email, setEmail] = useState('');
@@ -50,7 +57,7 @@ export function Sidebar({ currentDocId }: SidebarProps) {
         if (!user) return;
         setCreating(true);
         try {
-            const newId = await createDocument(user.uid);
+            const newId = await createOptimizedDocument(user.uid);
             router.push(`/doc/${newId}`);
             setIsOpen(false);
         } catch (error: any) {
@@ -256,7 +263,11 @@ export function Sidebar({ currentDocId }: SidebarProps) {
 
                             {/* Document list */}
                             <div className="flex-1 overflow-y-auto -mx-2">
-                                {docsLoading ? (
+                                {docsError ? (
+                                    <div className="text-sm text-red-500 px-2">
+                                        Error: {docsError}
+                                    </div>
+                                ) : docsLoading ? (
                                     <div className="text-sm text-foreground/50 px-2">
                                         Loading documents...
                                     </div>

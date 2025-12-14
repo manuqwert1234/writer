@@ -20,17 +20,18 @@ export async function POST(req: Request) {
             messages: [
                 {
                     role: "system",
-                    // Simpler system prompt for faster processing
-                    content: "You are a fast autocomplete engine completing the user's sentence. Output ONLY the completion text. No quotes. No explanations."
+                    content: "Continue the user's writing naturally. Output ONLY the continuation text. No quotes, no explanations. Match the tone and style."
                 },
                 { role: "user", content: context }
             ],
-            // 8B Instant - The Speed King (~800+ tokens/sec)
+            // 8B Instant - fastest model (~800+ tokens/sec)
             model: "llama-3.1-8b-instant",
-            // Autocomplete only needs 3-5 words
-            max_tokens: 20,
-            // Lower temperature = faster deterministic result
-            temperature: 0.1,
+            // More tokens = better sentence completions
+            max_tokens: 50,
+            // Low temperature for coherent, predictable completions
+            temperature: 0.3,
+            // Stop at sentence boundaries for cleaner completions
+            stop: ["\n\n", ".", "!", "?"],
         });
 
         const suggestion = completion.choices[0]?.message?.content || "";

@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { AuthProvider } from "@/components/AuthProvider";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ClientOnly } from "@/components/ClientOnly";
+import { OptimizedAuthProvider } from "@/components/OptimizedAuthProvider";
 import { Navbar } from "@/components/Navbar";
-import { Player } from "@/components/Player";
+import { LazyPlayer } from "@/components/LazyPlayer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,18 +39,22 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
-          <ThemeProvider>
-            {/* Player is outside the content wrapper so it can be fixed background */}
-            <Player />
+        <ErrorBoundary>
+          <ClientOnly>
+          <OptimizedAuthProvider>
+            <ThemeProvider>
+              {/* Lazy Player is outside the content wrapper so it can be fixed background */}
+              <LazyPlayer />
 
-            {/* Content wrapper - TRANSPARENT to show gradient */}
-            <div className="relative z-10 w-full min-h-screen" style={{ background: 'transparent' }}>
-              <Navbar />
-              {children}
-            </div>
-          </ThemeProvider>
-        </AuthProvider>
+              {/* Content wrapper - TRANSPARENT to show gradient */}
+              <div className="relative z-10 w-full min-h-screen" style={{ background: 'transparent' }}>
+                <Navbar />
+                {children}
+              </div>
+            </ThemeProvider>
+          </OptimizedAuthProvider>
+        </ClientOnly>
+        </ErrorBoundary>
       </body>
     </html>
   );

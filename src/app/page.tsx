@@ -4,11 +4,12 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ContentArea } from "@/components/ContentArea";
 import { Sidebar } from "@/components/Sidebar";
-import { useAuth } from "@/components/AuthProvider";
-import { createDocument } from "@/hooks/useDocument";
+import { useOptimizedAuth } from "@/components/OptimizedAuthProvider";
+import { DocumentLoading } from "@/components/LoadingStates";
+import { createOptimizedDocument } from "@/hooks/useOptimizedDocument";
 
 export default function Home() {
-  const { user, loading } = useAuth();
+  const { user, loading } = useOptimizedAuth();
   const router = useRouter();
 
   // Redirect to first document or create new one
@@ -16,7 +17,7 @@ export default function Home() {
     if (!loading && user) {
       // For now, create a new document and redirect
       // In production, you might want to fetch the most recent document
-      createDocument(user.uid).then((docId) => {
+      createOptimizedDocument(user.uid).then((docId) => {
         router.push(`/doc/${docId}`);
       });
     }
@@ -25,9 +26,7 @@ export default function Home() {
   if (loading) {
     return (
       <ContentArea>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-foreground/50">Loading...</div>
-        </div>
+        <DocumentLoading />
       </ContentArea>
     );
   }

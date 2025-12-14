@@ -13,7 +13,10 @@ const withPWA = withPWAInit({
 });
 
 const nextConfig: NextConfig = {
-  reactCompiler: true,
+  reactCompiler: false, // Disabled to improve compilation performance
+  
+  // Fix for multiple lockfiles warning (Vercel deployment)
+  outputFileTracingRoot: __dirname,
 
   // Configure images to allow Jamendo CDN
   images: {

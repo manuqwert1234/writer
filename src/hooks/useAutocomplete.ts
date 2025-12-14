@@ -27,7 +27,8 @@ export function useAutocomplete() {
     const fetchSuggestion = useCallback(async (editor: Editor) => {
         const text = editor.getText();
         const cursorPosition = editor.state.selection.anchor;
-        const context = text.slice(Math.max(0, cursorPosition - 500), cursorPosition);
+        // Get more context (last 1000 chars) for better paragraph memory
+        const context = text.slice(Math.max(0, cursorPosition - 1000), cursorPosition);
 
         if (!context.trim() || context.length < 10) {
             setGhostText('');
@@ -102,7 +103,7 @@ export function useAutocomplete() {
 
         debounceTimer.current = setTimeout(() => {
             fetchSuggestion(editor);
-        }, 1000);
+        }, 500); // Faster response (500ms instead of 1s)
     }, [fetchSuggestion]);
 
     /**
