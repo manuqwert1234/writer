@@ -12,12 +12,12 @@ export function Navbar() {
             className={`fixed top-0 left-0 right-0 z-40 transition-opacity duration-500 ${shouldFade ? 'opacity-10 hover:opacity-100' : 'opacity-100'
                 }`}
         >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-4 pb-4 flex items-center justify-between">
-                {/* Left spacer - same width as hamburger menu on mobile */}
-                <div className="w-12 sm:w-0"></div>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-4 pb-4 flex items-center">
+                {/* Left spacer for hamburger on mobile */}
+                <div className="w-12 sm:w-0 shrink-0"></div>
                 
-                {/* Writer title - left on small, centered on 1200px+ */}
-                <div className="flex items-center gap-4 flex-1 justify-start min-[1200px]:justify-center">
+                {/* Writer title - centered on small, left on large */}
+                <div className="flex-1 flex justify-center min-[1200px]:justify-start">
                     <h1
                         className="text-xl font-mono font-semibold text-white"
                         style={{ mixBlendMode: 'difference' }}
@@ -26,8 +26,9 @@ export function Navbar() {
                     </h1>
                 </div>
 
+                {/* Right side - Focus and Theme buttons (hidden on mobile) */}
                 <div
-                    className="hidden sm:flex items-center gap-2"
+                    className="hidden sm:flex items-center gap-2 shrink-0"
                     style={{ mixBlendMode: 'difference' }}
                 >
                     <button
