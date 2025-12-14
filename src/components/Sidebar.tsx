@@ -86,11 +86,12 @@ export function Sidebar({ currentDocId }: SidebarProps) {
 
     return (
         <>
-            {/* Toggle button */}
+            {/* Toggle button - aligned with navbar center */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`fixed top-6 sm:top-4 left-4 z-50 p-3 rounded-full transition-all duration-500 ${shouldFade && !isOpen ? 'opacity-10 hover:opacity-100' : 'opacity-100'
+                className={`fixed left-4 z-50 p-3 rounded-full transition-all duration-500 ${shouldFade && !isOpen ? 'opacity-10 hover:opacity-100' : 'opacity-100'
                     } hover:bg-foreground/5`}
+                style={{ top: '2rem', transform: 'translateY(-50%)' }}
                 aria-label="Toggle sidebar"
             >
                 <svg
