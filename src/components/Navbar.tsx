@@ -18,7 +18,7 @@ export function Navbar() {
                 <div className="w-12 sm:w-0 shrink-0"></div>
                 
                 {/* Writer title - centered on small, left on large */}
-                <div className="flex-1 flex items-center justify-center min-[1200px]:justify-start">
+                <div className="flex-1 flex items-center justify-center min-[1200px]:justify-start" style={{ paddingTop: '0.25rem' }}>
                     <h1
                         className="text-xl font-mono font-semibold text-white leading-none m-0"
                         style={{ mixBlendMode: 'difference' }}
@@ -30,7 +30,7 @@ export function Navbar() {
                 {/* Right side - Focus and Theme buttons (hidden on mobile) */}
                 <div
                     className="hidden sm:flex items-center gap-2 shrink-0"
-                    style={{ mixBlendMode: 'difference' }}
+                    style={{ mixBlendMode: 'difference', paddingTop: '0.25rem' }}
                 >
                     <button
                         onClick={toggleFocusMode}

@@ -101,7 +101,7 @@ export function Player() {
             />
 
             {/* Genre selector - top right, aligned with navbar center */}
-            <div className="fixed right-4 z-50" style={{ top: '2rem', transform: 'translateY(-50%)' }}>
+            <div className="fixed right-4 z-50" style={{ top: '2.25rem', transform: 'translateY(-50%)' }}>
                 <button
                     onClick={() => setShowGenres(!showGenres)}
                     className="px-4 py-2 rounded-full text-white/80 hover:text-white transition-colors flex items-center gap-2"
