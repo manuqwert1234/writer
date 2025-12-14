@@ -101,7 +101,7 @@ export function Player() {
             />
 
             {/* Genre selector - top right */}
-            <div className="fixed top-4 right-4 z-50">
+            <div className="fixed top-6 sm:top-4 right-4 z-50">
                 <button
                     onClick={() => setShowGenres(!showGenres)}
                     className="px-4 py-2 rounded-full text-white/80 hover:text-white transition-colors flex items-center gap-2"
