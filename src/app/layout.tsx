@@ -19,7 +19,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Writer",
   description: "A minimal writing space",
+  manifest: "/manifest.json",
 };
+
+export const viewport = {
+  themeColor: "#000000",
+};
+
 
 export default function RootLayout({
   children,
