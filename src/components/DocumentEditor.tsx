@@ -78,6 +78,72 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
     const [showExportMenu, setShowExportMenu] = useState(false);
     const [exporting, setExporting] = useState(false);
 
+    const editor = useEditor({
+        immediatelyRender: false,
+        extensions: [
+            StarterKit.configure({
+                heading: {
+                    levels: [1, 2, 3],
+                },
+            }),
+            Placeholder.configure({
+                placeholder: 'Start writing...',
+            }),
+        ],
+        content: '',
+        editorProps: {
+            attributes: {
+                class: 'editor-content',
+            },
+            handleKeyDown: (view, event) => {
+                if (event.key === 'Tab' && ghostText) {
+                    event.preventDefault();
+                    const text = acceptGhostText();
+                    if (text) {
+                        view.dispatch(view.state.tr.insertText(text));
+                    }
+                    return true;
+                }
+                if (event.key === 'Escape' && ghostText) {
+                    dismissGhostText();
+                    return true;
+                }
+                return false;
+            },
+        },
+        onUpdate: ({ editor }) => {
+            setTyping(true);
+            handleTyping(editor);
+
+            const coords = editor.view.coordsAtPos(editor.state.selection.anchor);
+            setCursorPosition({ top: coords.top, left: coords.left });
+
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+            }
+
+            typingTimeoutRef.current = setTimeout(() => {
+                setTyping(false);
+            }, 2000);
+
+            const content = editor.getHTML();
+            saveDocument(content);
+        },
+        onSelectionUpdate: ({ editor }) => {
+            const coords = editor.view.coordsAtPos(editor.state.selection.anchor);
+            setCursorPosition({ top: coords.top, left: coords.left });
+        },
+        onFocus: () => {
+            setTyping(true);
+        },
+        onBlur: () => {
+            setTimeout(() => {
+                setTyping(false);
+                dismissGhostText();
+            }, 500);
+        },
+    });
+
     // Export to PDF
     const exportToPDF = useCallback(async () => {
         if (!editor || !document) return;
@@ -146,72 +212,6 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
         window.document.body.removeChild(a);
         URL.revokeObjectURL(url);
     }, [editor, document]);
-
-    const editor = useEditor({
-        immediatelyRender: false,
-        extensions: [
-            StarterKit.configure({
-                heading: {
-                    levels: [1, 2, 3],
-                },
-            }),
-            Placeholder.configure({
-                placeholder: 'Start writing...',
-            }),
-        ],
-        content: '',
-        editorProps: {
-            attributes: {
-                class: 'editor-content',
-            },
-            handleKeyDown: (view, event) => {
-                if (event.key === 'Tab' && ghostText) {
-                    event.preventDefault();
-                    const text = acceptGhostText();
-                    if (text) {
-                        view.dispatch(view.state.tr.insertText(text));
-                    }
-                    return true;
-                }
-                if (event.key === 'Escape' && ghostText) {
-                    dismissGhostText();
-                    return true;
-                }
-                return false;
-            },
-        },
-        onUpdate: ({ editor }) => {
-            setTyping(true);
-            handleTyping(editor);
-
-            const coords = editor.view.coordsAtPos(editor.state.selection.anchor);
-            setCursorPosition({ top: coords.top, left: coords.left });
-
-            if (typingTimeoutRef.current) {
-                clearTimeout(typingTimeoutRef.current);
-            }
-
-            typingTimeoutRef.current = setTimeout(() => {
-                setTyping(false);
-            }, 2000);
-
-            const content = editor.getHTML();
-            saveDocument(content);
-        },
-        onSelectionUpdate: ({ editor }) => {
-            const coords = editor.view.coordsAtPos(editor.state.selection.anchor);
-            setCursorPosition({ top: coords.top, left: coords.left });
-        },
-        onFocus: () => {
-            setTyping(true);
-        },
-        onBlur: () => {
-            setTimeout(() => {
-                setTyping(false);
-                dismissGhostText();
-            }, 500);
-        },
-    });
 
     useEffect(() => {
         if (editor && document && !hasInitializedRef.current) {
