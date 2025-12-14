@@ -53,8 +53,9 @@ export function Sidebar({ currentDocId }: SidebarProps) {
             const newId = await createDocument(user.uid);
             router.push(`/doc/${newId}`);
             setIsOpen(false);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error creating document:', error);
+            alert(`Failed to create document: ${error.message}`);
         } finally {
             setCreating(false);
         }
