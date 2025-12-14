@@ -82,12 +82,12 @@ export function useJamendo(initialGenre: MusicGenre = 'lofi+ambient') {
                 throw new Error(data.headers.error_message || 'Unknown API error');
             }
 
-            // Map API response - use mp3d streaming CDN
+            // Map API response - use the direct audio URL from API
             const mappedTracks: JamendoTrack[] = data.results.map((track) => ({
                 id: track.id,
                 title: track.name,
                 artist: track.artist_name,
-                audioSrc: `https://mp3d.jamendo.com/?trackid=${track.id}&format=mp31`,
+                audioSrc: track.audio, // Use direct URL from API
                 coverArt: track.image,
             }));
 

@@ -13,7 +13,7 @@ interface DocumentEditorProps {
 }
 
 export function DocumentEditor({ documentId }: DocumentEditorProps) {
-    const { document, loading, saveDocument, error } = useOptimizedDocument(documentId);
+    const { document, loading, saveDocument, error, saveStatus } = useOptimizedDocument(documentId);
     const { setTyping, focusMode, isTyping } = useAppStore();
     const { ghostText, handleTyping, acceptGhostText, dismissGhostText, isLoading, cacheHit } = useAutocomplete();
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -271,9 +271,34 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
                 </span>
             )}
 
-            {/* Status indicator */}
-            {(isLoading || (ghostText && cacheHit)) && (
-                <div className="fixed bottom-4 right-4 z-40">
+            {/* Status indicators */}
+            <div className="fixed bottom-4 right-4 z-40 flex flex-col gap-2 items-end">
+                {/* Save status */}
+                {saveStatus !== 'idle' && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-foreground/5 text-foreground/50 text-xs">
+                        {saveStatus === 'saving' && (
+                            <>
+                                <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse" />
+                                Saving...
+                            </>
+                        )}
+                        {saveStatus === 'saved' && (
+                            <>
+                                <span className="text-green-500">✓</span>
+                                Saved
+                            </>
+                        )}
+                        {saveStatus === 'error' && (
+                            <>
+                                <span className="text-red-500">✗</span>
+                                Save failed
+                            </>
+                        )}
+                    </div>
+                )}
+                
+                {/* AI status */}
+                {(isLoading || (ghostText && cacheHit)) && (
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-foreground/5 text-foreground/50 text-xs">
                         {isLoading ? (
                             <>
@@ -287,8 +312,8 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
                             </>
                         ) : null}
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 }

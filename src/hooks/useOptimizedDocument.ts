@@ -17,6 +17,7 @@ export function useOptimizedDocument(documentId: string | null) {
     const [document, setDocument] = useState<Document | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
+    const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const pendingContentRef = useRef<string | null>(null);
     const unsubscribeRef = useRef<(() => void) | null>(null);
@@ -86,6 +87,7 @@ export function useOptimizedDocument(documentId: string | null) {
             if (!documentId) return;
 
             pendingContentRef.current = content;
+            setSaveStatus('saving');
 
             // Clear existing timeout
             if (saveTimeoutRef.current) {
@@ -106,9 +108,13 @@ export function useOptimizedDocument(documentId: string | null) {
                         },
                         { merge: true }
                     );
+                    setSaveStatus('saved');
+                    // Reset to idle after 2 seconds
+                    setTimeout(() => setSaveStatus('idle'), 2000);
                 } catch (err) {
                     console.error('Save error:', err);
                     setError(err as Error);
+                    setSaveStatus('error');
                 }
             }, 1000);
         },
@@ -124,7 +130,7 @@ export function useOptimizedDocument(documentId: string | null) {
         };
     }, []);
 
-    return { document, loading, error, saveDocument };
+    return { document, loading, error, saveDocument, saveStatus };
 }
 
 // Create a new document with error handling
