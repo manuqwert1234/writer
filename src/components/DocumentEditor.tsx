@@ -271,19 +271,20 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
     return (
         <div className={`editor-wrapper relative ${focusMode || isTyping ? 'editor-focused' : ''}`}>
 
-            {/* Fixed Formatting Toolbar */}
+            {/* Fixed Formatting Toolbar - Scrollable on mobile */}
             {editor && (
                 <div
-                    className="sticky top-20 z-30 mb-4 flex items-center gap-1 px-3 py-2 rounded-xl"
+                    className="sticky top-20 z-30 mb-4 flex items-center gap-1 px-2 sm:px-3 py-2 rounded-xl overflow-x-auto scrollbar-hide"
                     style={{
                         background: 'rgba(128,128,128,0.1)',
                         backdropFilter: 'blur(10px)',
+                        WebkitOverflowScrolling: 'touch',
                     }}
                 >
                     {/* Bold */}
                     <button
                         onClick={() => editor.chain().focus().toggleBold().run()}
-                        className={btnClass(editor.isActive('bold'))}
+                        className={`${btnClass(editor.isActive('bold'))} shrink-0`}
                         title="Bold (Ctrl+B)"
                     >
                         <strong>B</strong>
@@ -292,7 +293,7 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
                     {/* Italic */}
                     <button
                         onClick={() => editor.chain().focus().toggleItalic().run()}
-                        className={btnClass(editor.isActive('italic'))}
+                        className={`${btnClass(editor.isActive('italic'))} shrink-0`}
                         title="Italic (Ctrl+I)"
                     >
                         <em>I</em>
@@ -301,18 +302,18 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
                     {/* Strikethrough */}
                     <button
                         onClick={() => editor.chain().focus().toggleStrike().run()}
-                        className={btnClass(editor.isActive('strike'))}
+                        className={`${btnClass(editor.isActive('strike'))} shrink-0`}
                         title="Strikethrough"
                     >
                         <s>S</s>
                     </button>
 
-                    <div className="w-px h-5 bg-foreground/10 mx-2" />
+                    <div className="w-px h-5 bg-foreground/10 mx-1 sm:mx-2 shrink-0" />
 
                     {/* Heading 1 */}
                     <button
                         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-                        className={btnClass(editor.isActive('heading', { level: 1 }))}
+                        className={`${btnClass(editor.isActive('heading', { level: 1 }))} shrink-0`}
                         title="Heading 1"
                     >
                         H1
@@ -321,7 +322,7 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
                     {/* Heading 2 */}
                     <button
                         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                        className={btnClass(editor.isActive('heading', { level: 2 }))}
+                        className={`${btnClass(editor.isActive('heading', { level: 2 }))} shrink-0`}
                         title="Heading 2"
                     >
                         H2
@@ -330,57 +331,60 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
                     {/* Heading 3 */}
                     <button
                         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-                        className={btnClass(editor.isActive('heading', { level: 3 }))}
+                        className={`${btnClass(editor.isActive('heading', { level: 3 }))} shrink-0`}
                         title="Heading 3"
                     >
                         H3
                     </button>
 
-                    <div className="w-px h-5 bg-foreground/10 mx-2" />
+                    <div className="w-px h-5 bg-foreground/10 mx-1 sm:mx-2 shrink-0" />
 
                     {/* Bullet List */}
                     <button
                         onClick={() => editor.chain().focus().toggleBulletList().run()}
-                        className={btnClass(editor.isActive('bulletList'))}
+                        className={`${btnClass(editor.isActive('bulletList'))} shrink-0`}
                         title="Bullet List"
                     >
-                        • List
+                        <span className="hidden sm:inline">• List</span>
+                        <span className="sm:hidden">•</span>
                     </button>
 
                     {/* Ordered List */}
                     <button
                         onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                        className={btnClass(editor.isActive('orderedList'))}
+                        className={`${btnClass(editor.isActive('orderedList'))} shrink-0`}
                         title="Numbered List"
                     >
-                        1. List
+                        <span className="hidden sm:inline">1. List</span>
+                        <span className="sm:hidden">1.</span>
                     </button>
 
                     {/* Quote */}
                     <button
                         onClick={() => editor.chain().focus().toggleBlockquote().run()}
-                        className={btnClass(editor.isActive('blockquote'))}
+                        className={`${btnClass(editor.isActive('blockquote'))} shrink-0`}
                         title="Quote"
                     >
-                        &ldquo; Quote
+                        <span className="hidden sm:inline">&ldquo; Quote</span>
+                        <span className="sm:hidden">&ldquo;</span>
                     </button>
 
                     {/* Code Block */}
                     <button
                         onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-                        className={btnClass(editor.isActive('codeBlock'))}
+                        className={`${btnClass(editor.isActive('codeBlock'))} shrink-0`}
                         title="Code Block"
                     >
                         {'</>'}
                     </button>
 
-                    <div className="w-px h-5 bg-foreground/10 mx-2" />
+                    <div className="w-px h-5 bg-foreground/10 mx-1 sm:mx-2 shrink-0" />
 
                     {/* Export Menu */}
-                    <div className="relative">
+                    <div className="relative shrink-0">
                         <button
                             onClick={() => setShowExportMenu(!showExportMenu)}
-                            className={`p-2 rounded transition-colors flex items-center gap-1 ${showExportMenu ? 'bg-foreground/20 text-foreground' : 'text-foreground/50 hover:text-foreground hover:bg-foreground/10'}`}
+                            className={`p-2 rounded transition-colors flex items-center gap-1 shrink-0 ${showExportMenu ? 'bg-foreground/20 text-foreground' : 'text-foreground/50 hover:text-foreground hover:bg-foreground/10'}`}
                             title="Export"
                             disabled={exporting}
                         >
@@ -394,8 +398,8 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                 </svg>
                             )}
-                            <span className="text-sm">Export</span>
-                            <svg className={`w-3 h-3 transition-transform ${showExportMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <span className="text-sm hidden sm:inline">Export</span>
+                            <svg className={`w-3 h-3 transition-transform hidden sm:block ${showExportMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
                         </button>
