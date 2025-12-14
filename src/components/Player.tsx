@@ -11,15 +11,46 @@ export function Player() {
     const [showPlaylist, setShowPlaylist] = useState(false);
     const [showGenres, setShowGenres] = useState(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const preloadRef = useRef<HTMLAudioElement | null>(null);
     const shouldPlayRef = useRef(false);
+    const preloadedTrackRef = useRef<string | null>(null);
 
     const currentGenreInfo = MUSIC_GENRES.find(g => g.id === genre);
+
+    // Get next track
+    const getNextTrack = useCallback(() => {
+        if (!currentTrack || tracks.length === 0) return null;
+        const currentIndex = tracks.findIndex(t => t.id === currentTrack.id);
+        const nextIndex = (currentIndex + 1) % tracks.length;
+        return tracks[nextIndex];
+    }, [currentTrack, tracks]);
+
+    // Preload next track in background
+    useEffect(() => {
+        const nextTrack = getNextTrack();
+        if (preloadRef.current && nextTrack && preloadedTrackRef.current !== nextTrack.id) {
+            preloadRef.current.src = nextTrack.audioSrc;
+            preloadRef.current.load();
+            preloadedTrackRef.current = nextTrack.id;
+        }
+    }, [currentTrack, getNextTrack]);
 
     // Handle track change - play immediately if was playing
     useEffect(() => {
         if (audioRef.current && currentTrack) {
-            setIsBuffering(true);
-            audioRef.current.src = currentTrack.audioSrc;
+            // Check if this track is already preloaded
+            const isPreloaded = preloadedTrackRef.current === currentTrack.id && preloadRef.current?.src;
+            
+            if (isPreloaded && preloadRef.current) {
+                // Swap audio elements for instant playback
+                const temp = audioRef.current;
+                audioRef.current = preloadRef.current;
+                preloadRef.current = temp;
+                preloadedTrackRef.current = null;
+            } else {
+                setIsBuffering(true);
+                audioRef.current.src = currentTrack.audioSrc;
+            }
             
             // If we should be playing, start immediately
             if (shouldPlayRef.current || isPlaying) {
@@ -92,7 +123,7 @@ export function Player() {
             {/* CSS Gradient Background - reacts to album colors */}
             <VibeBackground currentTrackImage={currentTrack?.coverArt} />
 
-            {/* Audio element with preload */}
+            {/* Main audio element */}
             <audio
                 ref={audioRef}
                 preload="auto"
@@ -102,6 +133,8 @@ export function Player() {
                 onWaiting={() => setIsBuffering(true)}
                 onCanPlay={() => setIsBuffering(false)}
             />
+            {/* Hidden preload audio for next track */}
+            <audio ref={preloadRef} preload="auto" style={{ display: 'none' }} />
 
             {/* Genre selector - top right */}
             <div className="fixed top-4 right-4 z-50">
