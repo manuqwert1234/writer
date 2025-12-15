@@ -106,9 +106,13 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
             handleKeyDown: (view, event) => {
                 if (event.key === 'Tab' && ghostText) {
                     event.preventDefault();
-                    const text = acceptGhostText();
-                    if (text) {
-                        view.dispatch(view.state.tr.insertText(text));
+                    const raw = acceptGhostText();
+                    if (raw) {
+                        const pos = view.state.selection.from;
+                        const prevChar = view.state.doc.textBetween(Math.max(0, pos - 1), pos, '\n', '\n');
+                        const needsSpace = prevChar && !/\s/.test(prevChar);
+                        const insertText = needsSpace ? ` ${raw.trimStart()}` : raw;
+                        view.dispatch(view.state.tr.insertText(insertText));
                     }
                     return true;
                 }
