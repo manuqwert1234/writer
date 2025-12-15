@@ -117,7 +117,12 @@ export function useAutocomplete() {
      * Accept the ghost text (Tab key)
      */
     const acceptGhostText = useCallback((): string => {
-        const text = ghostText;
+        let text = ghostText;
+        const lastChar = lastContext.current.slice(-1);
+        // If suggestion has no leading space and the last typed char isn't whitespace, add a space
+        if (text && !text.startsWith(' ') && !(lastChar && /\s/.test(lastChar))) {
+            text = ' ' + text;
+        }
         setGhostText('');
         lastContext.current = '';
         setCacheHit(false);
