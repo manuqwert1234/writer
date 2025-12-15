@@ -272,13 +272,18 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
     }
 
     if (error) {
-        const isPermissionError = (error as any)?.code === 'permission-denied' || /insufficient permissions/i.test(error.message);
+        const isPermissionError =
+            (error as any)?.code === 'permission-denied' ||
+            /insufficient permissions/i.test(error.message);
+
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-                <div className="text-red-500 mb-4">Error loading document</div>
-                <p className="text-foreground/70 mb-4">
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
+                <div className="text-lg font-medium text-foreground">
+                    We couldn&apos;t open this document
+                </div>
+                <p className="text-foreground/70 max-w-xl">
                     {isPermissionError
-                        ? 'This document is not accessible with your current account. It may belong to another user.'
+                        ? 'This doc looks like it belongs to a different account or was shared from another login. You can create a fresh document and keep writing.'
                         : error.message}
                 </p>
                 <div className="flex flex-col gap-3">
