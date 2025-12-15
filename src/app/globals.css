@@ -41,6 +41,16 @@ body {
   min-height: 100vh;
 }
 
+/* Soft page fade-in */
+@keyframes pageFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.page-fade {
+  animation: pageFadeIn 0.6s ease forwards;
+}
+
 /* Minimal reset - no borders by default */
 * {
   border: none;
