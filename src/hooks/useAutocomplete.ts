@@ -99,6 +99,13 @@ export function useAutocomplete() {
         lastContext.current = '';
         setCacheHit(false);
 
+        const anchor = editor.state.selection.anchor;
+        const recent = editor.state.doc.textBetween(Math.max(0, anchor - 2), anchor, '\n', '\n');
+        if (/[.!?]$/.test(recent)) {
+            if (debounceTimer.current) clearTimeout(debounceTimer.current);
+            return;
+        }
+
         if (debounceTimer.current) clearTimeout(debounceTimer.current);
 
         debounceTimer.current = setTimeout(() => {

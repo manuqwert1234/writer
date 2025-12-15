@@ -10,6 +10,7 @@ export function Player() {
     const [isBuffering, setIsBuffering] = useState(false);
     const [showPlaylist, setShowPlaylist] = useState(false);
     const [showGenres, setShowGenres] = useState(false);
+    const [allowDynamicColors, setAllowDynamicColors] = useState(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const shouldPlayRef = useRef(false);
 
@@ -47,7 +48,10 @@ export function Player() {
             const playPromise = audioRef.current.play();
             if (playPromise !== undefined) {
                 playPromise
-                    .then(() => setIsPlaying(true))
+                    .then(() => {
+                        setIsPlaying(true);
+                        setAllowDynamicColors(true);
+                    })
                     .catch(error => {
                         console.error("Playback failed:", error);
                         setIsPlaying(false);
@@ -62,6 +66,7 @@ export function Player() {
         const currentIndex = tracks.findIndex(t => t.id === currentTrack.id);
         const nextIndex = (currentIndex + 1) % tracks.length;
         setCurrentTrack(tracks[nextIndex]);
+        setAllowDynamicColors(true);
     }, [currentTrack, tracks, setCurrentTrack]);
 
     const playPrev = useCallback(() => {
@@ -70,24 +75,27 @@ export function Player() {
         const currentIndex = tracks.findIndex(t => t.id === currentTrack.id);
         const prevIndex = (currentIndex - 1 + tracks.length) % tracks.length;
         setCurrentTrack(tracks[prevIndex]);
+        setAllowDynamicColors(true);
     }, [currentTrack, tracks, setCurrentTrack]);
 
     const handleTrackSelect = useCallback((track: JamendoTrack) => {
         setCurrentTrack(track);
         setIsPlaying(true);
         setShowPlaylist(false);
+        setAllowDynamicColors(true);
     }, [setCurrentTrack]);
 
     const handleGenreSelect = useCallback((newGenre: MusicGenre) => {
         changeGenre(newGenre);
         setShowGenres(false);
         setIsPlaying(false);
+        setAllowDynamicColors(false); // wait for first play in new genre
     }, [changeGenre]);
 
     return (
         <>
-            {/* CSS Gradient Background - reacts to album colors */}
-            <VibeBackground currentTrackImage={currentTrack?.coverArt} />
+            {/* CSS Gradient Background - reacts to album colors after first play/select */}
+            <VibeBackground currentTrackImage={allowDynamicColors ? currentTrack?.coverArt : undefined} enableSync={allowDynamicColors} />
 
             {/* Audio element */}
             <audio

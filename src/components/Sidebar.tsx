@@ -112,19 +112,21 @@ export function Sidebar({ currentDocId }: SidebarProps) {
             {/* Overlay */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 bg-black/20 z-40 transition-opacity"
+                    className="fixed inset-0 bg-black/20 z-40 transition-opacity animate-soft-fade"
                     onClick={() => setIsOpen(false)}
                 />
             )}
 
             {/* Sidebar */}
             <aside
-                className={`fixed top-0 left-0 h-full w-72 z-50 transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'
+                className={`fixed top-0 left-0 h-full w-72 z-50 transform transition-transform duration-500 ease-[cubic-bezier(0.22,0.61,0.36,1)] ${isOpen ? 'translate-x-0' : '-translate-x-full'
                     }`}
                 style={{
                     background: 'rgba(0, 0, 0, 0.8)',
                     backdropFilter: 'blur(20px)',
-                    WebkitBackdropFilter: 'blur(20px)'
+                    WebkitBackdropFilter: 'blur(20px)',
+                    boxShadow: '0 25px 60px rgba(0,0,0,0.35)',
+                    willChange: 'transform'
                 }}
             >
                 <div className="flex flex-col h-full p-6">

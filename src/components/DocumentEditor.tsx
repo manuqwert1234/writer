@@ -1,12 +1,15 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
-import { useOptimizedDocument } from '@/hooks/useOptimizedDocument';
+import { useOptimizedDocument, createOptimizedDocument } from '@/hooks/useOptimizedDocument';
 import { useAppStore } from '@/store/theme-store';
 import { useAutocomplete } from '@/hooks/useAutocomplete';
+import { useOptimizedAuth } from './OptimizedAuthProvider';
+import { useRouter } from 'next/navigation';
 
 interface DocumentEditorProps {
     documentId: string;
@@ -70,13 +73,18 @@ function htmlToMarkdown(html: string): string {
 
 export function DocumentEditor({ documentId }: DocumentEditorProps) {
     const { document, loading, saveDocument, error, saveStatus } = useOptimizedDocument(documentId);
+    const { user } = useOptimizedAuth();
+    const router = useRouter();
     const { setTyping, focusMode, isTyping } = useAppStore();
     const { ghostText, handleTyping, acceptGhostText, dismissGhostText, isLoading, cacheHit } = useAutocomplete();
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const hasInitializedRef = useRef(false);
     const [cursorPosition, setCursorPosition] = useState<{ top: number; left: number } | null>(null);
     const [showExportMenu, setShowExportMenu] = useState(false);
+    const [exportMenuPos, setExportMenuPos] = useState<{ top: number; left: number; width: number } | null>(null);
     const [exporting, setExporting] = useState(false);
+    const [fixingPermissions, setFixingPermissions] = useState(false);
+    const exportBtnRef = useRef<HTMLButtonElement | null>(null);
 
     const editor = useEditor({
         immediatelyRender: false,
@@ -220,6 +228,28 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
         }
     }, [editor, document]);
 
+    // Keep export menu positioned if window resizes
+    useEffect(() => {
+        if (!showExportMenu) return;
+        const updatePosition = () => {
+            if (exportBtnRef.current) {
+                const rect = exportBtnRef.current.getBoundingClientRect();
+                setExportMenuPos({
+                    top: rect.bottom + 8,
+                    left: rect.left,
+                    width: rect.width,
+                });
+            }
+        };
+        updatePosition();
+        window.addEventListener('resize', updatePosition);
+        window.addEventListener('scroll', updatePosition, true);
+        return () => {
+            window.removeEventListener('resize', updatePosition);
+            window.removeEventListener('scroll', updatePosition, true);
+        };
+    }, [showExportMenu]);
+
     useEffect(() => {
         hasInitializedRef.current = false;
         dismissGhostText();
@@ -242,16 +272,42 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
     }
 
     if (error) {
+        const isPermissionError = (error as any)?.code === 'permission-denied' || /insufficient permissions/i.test(error.message);
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
                 <div className="text-red-500 mb-4">Error loading document</div>
-                <p className="text-foreground/70 mb-4">{error.message}</p>
-                <button
-                    onClick={() => window.location.reload()}
-                    className="px-4 py-2 bg-foreground text-background rounded-lg hover:opacity-90 transition-opacity"
-                >
-                    Retry
-                </button>
+                <p className="text-foreground/70 mb-4">
+                    {isPermissionError
+                        ? 'This document is not accessible with your current account. It may belong to another user.'
+                        : error.message}
+                </p>
+                <div className="flex flex-col gap-3">
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="px-4 py-2 bg-foreground text-background rounded-lg hover:opacity-90 transition-opacity"
+                    >
+                        Retry
+                    </button>
+                    {isPermissionError && user && (
+                        <button
+                            disabled={fixingPermissions}
+                            onClick={async () => {
+                                try {
+                                    setFixingPermissions(true);
+                                    const newId = await createOptimizedDocument(user.uid);
+                                    router.push(`/doc/${newId}`);
+                                } catch (createErr) {
+                                    alert('Could not create a new document. Please try again.');
+                                } finally {
+                                    setFixingPermissions(false);
+                                }
+                            }}
+                            className="px-4 py-2 bg-foreground/10 text-foreground rounded-lg hover:bg-foreground/20 transition-opacity disabled:opacity-50"
+                        >
+                            {fixingPermissions ? 'Creating...' : 'Create a new doc and continue'}
+                        </button>
+                    )}
+                </div>
             </div>
         );
     }
@@ -279,6 +335,7 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
                         background: 'rgba(128,128,128,0.1)',
                         backdropFilter: 'blur(10px)',
                         WebkitOverflowScrolling: 'touch',
+                        overflowY: 'visible',
                     }}
                 >
                     {/* Bold */}
@@ -383,8 +440,24 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
                     {/* Export Menu */}
                     <div className="relative shrink-0">
                         <button
-                            onClick={() => setShowExportMenu(!showExportMenu)}
-                            className={`p-2 rounded transition-colors flex items-center gap-1 shrink-0 ${showExportMenu ? 'bg-foreground/20 text-foreground' : 'text-foreground/50 hover:text-foreground hover:bg-foreground/10'}`}
+                            ref={exportBtnRef}
+                            onClick={() => {
+                                const next = !showExportMenu;
+                                setShowExportMenu(next);
+                                if (next && exportBtnRef.current) {
+                                    const rect = exportBtnRef.current.getBoundingClientRect();
+                                    setExportMenuPos({
+                                        top: rect.bottom + 8,
+                                        left: rect.left,
+                                        width: rect.width,
+                                    });
+                                }
+                            }}
+                            className={`p-2 rounded-lg border transition-all flex items-center gap-2 shrink-0 shadow-sm ${
+                                showExportMenu
+                                    ? 'bg-foreground/20 text-foreground border-foreground/20'
+                                    : 'bg-foreground/10 text-foreground/80 hover:text-foreground hover:bg-foreground/15 border-foreground/15'
+                            }`}
                             title="Export"
                             disabled={exporting}
                         >
@@ -405,12 +478,17 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
                         </button>
 
                         {/* Export dropdown */}
-                        {showExportMenu && (
+                        {showExportMenu && exportMenuPos && typeof window !== 'undefined' && createPortal(
                             <div
-                                className="absolute top-full left-0 mt-2 w-44 rounded-xl overflow-hidden shadow-xl z-50"
+                                className="rounded-xl overflow-hidden shadow-xl border border-foreground/15"
                                 style={{
-                                    background: 'rgba(0,0,0,0.9)',
+                                    position: 'fixed',
+                                    top: exportMenuPos.top,
+                                    left: exportMenuPos.left,
+                                    width: Math.max(180, exportMenuPos.width) + 'px',
+                                    background: 'rgba(0,0,0,0.95)',
                                     backdropFilter: 'blur(20px)',
+                                    zIndex: 1000,
                                 }}
                             >
                                 <button
@@ -418,7 +496,7 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
                                     className="w-full px-4 py-3 text-left text-sm flex items-center gap-3 hover:bg-white/10 transition-colors text-white/80 hover:text-white"
                                 >
                                     <svg className="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4zm-2.5 9.5a1 1 0 011-1h1a1 1 0 110 2h-1a1 1 0 01-1-1zm-3.5 0a1 1 0 011-1h1a1 1 0 110 2H8a1 1 0 01-1-1z"/>
+                                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4zm-2.5 9.5a1 1 0 011-1h1a1 1 0 110 2h-1a1 1 0 01-1-1z"/>
                                     </svg>
                                     <div>
                                         <div className="font-medium">PDF</div>
@@ -437,7 +515,8 @@ export function DocumentEditor({ documentId }: DocumentEditorProps) {
                                         <div className="text-xs text-white/50">For GitHub, Notion, etc.</div>
                                     </div>
                                 </button>
-                            </div>
+                            </div>,
+                            window.document.body
                         )}
                     </div>
                 </div>
