@@ -13,6 +13,16 @@ function rgbToHex(r: number, g: number, b: number): string {
     return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
 }
 
+// Blend two hex colors
+function mix(hex1: string, hex2: string, ratio = 0.2): string {
+    const h1 = hex1.replace('#', '');
+    const h2 = hex2.replace('#', '');
+    const c1 = [parseInt(h1.slice(0, 2), 16), parseInt(h1.slice(2, 4), 16), parseInt(h1.slice(4, 6), 16)];
+    const c2 = [parseInt(h2.slice(0, 2), 16), parseInt(h2.slice(2, 4), 16), parseInt(h2.slice(4, 6), 16)];
+    const m = c1.map((v, i) => Math.round(v * (1 - ratio) + c2[i] * ratio));
+    return rgbToHex(m[0], m[1], m[2]);
+}
+
 // Animated gradient background that flows from bottom-right to top-left
 const VibeBackground = memo(function VibeBackground({
     currentTrackImage,
@@ -42,11 +52,11 @@ const VibeBackground = memo(function VibeBackground({
             try {
                 const rawPalette = colorThief.getPalette(img, 5);
                 if (rawPalette && rawPalette.length >= 3) {
-                    const palette = {
-                        color1: rgbToHex(rawPalette[0][0], rawPalette[0][1], rawPalette[0][2]),
-                        color2: rgbToHex(rawPalette[1][0], rawPalette[1][1], rawPalette[1][2]),
-                        color3: rgbToHex(rawPalette[2][0], rawPalette[2][1], rawPalette[2][2]),
-                    };
+                    // Soften extremes to avoid flashes; blend with default base color
+                    const color1 = mix(rgbToHex(rawPalette[0][0], rawPalette[0][1], rawPalette[0][2]), defaultPalette.color1, 0.25);
+                    const color2 = mix(rgbToHex(rawPalette[1][0], rawPalette[1][1], rawPalette[1][2]), defaultPalette.color1, 0.25);
+                    const color3 = mix(rgbToHex(rawPalette[2][0], rawPalette[2][1], rawPalette[2][2]), defaultPalette.color1, 0.25);
+                    const palette = { color1, color2, color3 };
 
                     setNextColors(palette);
                     setIsBlending(true);
