@@ -1,6 +1,4 @@
-Here’s a `README.md` you can copy into your repo:
 
-```markdown
 # Writer
 
 Writer is a minimal, ambient writing space with **AI autocomplete**, **real‑time sync**, and **lo‑fi background music**. It’s designed to feel like a focused studio for long-form writing.
